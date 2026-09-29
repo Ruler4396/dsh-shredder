@@ -1,0 +1,77 @@
+{
+  "name": "dsh-shredder",
+  "description": "DeepSeek Harness (dsh) plugin: one red \"Shred session\" row inside the native session menu, for permanently deleting an archived session.",
+  "version": "0.2.0",
+  "license": "MIT",
+  "author": "Ruler4396",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ruler4396/dsh-shredder.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Ruler4396/dsh-shredder/issues"
+  },
+  "homepage": "https://github.com/Ruler4396/dsh-shredder#readme",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "README.zh.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "cordis",
+    "plugin",
+    "sessions",
+    "archive",
+    "delete"
+  ],
+  "scripts": {
+    "test": "node test/delete-endpoint.mjs && node test/style-injection.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "react"
+      ]
+    },
+    "compatibility": {
+      "dsh": ">=0.1.5",
+      "dshReleases": {
+        "0.2.0-rc.2": "compatible"
+      }
+    },
+    "plugin": {
+      "schemaVersion": 1,
+      "category": "session",
+      "displayName": {
+        "en": "Shredder",
+        "zh-CN": "碎纸机"
+      },
+      "summary": {
+        "en": "Adds one red row to the native session menu that permanently deletes an archived session's log directory.",
+        "zh-CN": "在原生会话菜单里加一枚红色行，把已归档会话的日志目录彻底删除。"
+      }
+    }
+  }
+}

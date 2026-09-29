@@ -1,0 +1,5 @@
+# dsh-shredder bundle patch: mount the plugin under its row id,
+# resolved through the profile's node_modules.
+- insert:
+    - id: shredder
+      name: dsh-shredder
