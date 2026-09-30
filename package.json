@@ -1,7 +1,7 @@
 {
   "name": "dsh-shredder",
   "description": "DeepSeek Harness (dsh) plugin: one red \"Shred session\" row inside the native session menu, for permanently deleting an archived session.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "license": "MIT",
   "author": "Ruler4396",
   "repository": {
