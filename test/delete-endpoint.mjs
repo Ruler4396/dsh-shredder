@@ -17,7 +17,7 @@ import { join } from 'node:path';
 const SESSION_ID = 'sess-shape-1';
 
 // ---- 一次调用的宿主端夹具：返回 { result, calls } ------------------------------
-async function runOnce({ persistence, withLiveSession = false, archivedHere = true }) {
+async function runOnce({ persistence, withLiveSession = false, entryBusy = false, archivedHere = true }) {
 	const scratch = mkdtempSync(join(tmpdir(), 'shredder-delete-'));
 	const sessionDir = join(scratch, 'project', SESSION_ID);
 	mkdirSync(join(sessionDir, 'artifacts'), { recursive: true });
@@ -28,7 +28,7 @@ async function runOnce({ persistence, withLiveSession = false, archivedHere = tr
 	const header = { id: SESSION_ID, cwd: 'C:/fixture/project', createdAt: 1 };
 
 	const liveSession = { id: SESSION_ID, header };
-	const storeEntry = { session: liveSession, announcing: false, appending: false, detachRequested: false };
+	const storeEntry = { session: liveSession, announcing: entryBusy, appending: false, detachRequested: false };
 	const sessions = {
 		get: (id) => (withLiveSession && id === SESSION_ID ? liveSession : undefined),
 		list: () => (withLiveSession ? [liveSession] : []),
@@ -102,6 +102,22 @@ for (const [name, factory, withLiveSession] of cases) {
 // 活会话那一发必须真的把驻留实例拆掉（entry.detach 走通）
 const live = await runOnce({ persistence: snapshottedWithStat, withLiveSession: true });
 assert.equal(live.result.evicted, 'ok', 'live session evicted through entry.detach');
+
+// 22:5x 真机那一格：驱逐来不及（会话正忙 ⇒ deferred）或本进程没有它（absent）时，
+// 请求里绝不许清归档标记——否则那一行还挂在各标签页上，会话会从"归档"跳进普通列表，
+// 点进去就是 session/not-found。两种情况都要"文件已删 + recordHeld"。
+for (const [name, options, expected] of [
+	['deferred（实例正忙，延后分离）', { withLiveSession: true, entryBusy: true }, 'held-deferred'],
+	['absent（本进程没有这个实例）', { withLiveSession: false }, 'held-absent'],
+]) {
+	const held = await runOnce({ persistence: snapshottedWithStat, ...options });
+	assert.equal(held.result.ok, true, `${name} → 文件删除本身算成功`);
+	assert.equal(held.survived, false, `${name} → 目录确实被删`);
+	assert.equal(held.result.recordHeld, true, `${name} → 标记暂留`);
+	assert.equal(held.result.setUpdate, expected, `${name} → setUpdate=${expected}`);
+	assert.deepEqual(held.calls.unarchive, [], `${name} → 请求里不许动归档集`);
+	console.log(`ok — ${name}: evicted=${held.result.evicted} setUpdate=${held.result.setUpdate} recordHeld=${held.result.recordHeld}`);
+}
 
 // 幽灵归档记录（22:5x 真机那一格）：日志不在场、id 还挂在归档集 ⇒ 摘记录，且**不碰盘上目录**
 const ghost = await runOnce({ persistence: emptyStore, withLiveSession: false, archivedHere: true });
